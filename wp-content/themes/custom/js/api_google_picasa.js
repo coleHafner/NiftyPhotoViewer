@@ -1,70 +1,88 @@
 
 //declare globals
-pwa_username = '106371500852327141618';
-pwa_base_url_user_entry = 'http://picasaweb.google.com/data/entry/base/user/' + pwa_username;
-pwa_base_url_user_feed = 'http://picasaweb.google.com/data/feed/base/user/' + pwa_username;
-pwa_base_url_search_feed = 'https://picasaweb.google.com/data/feed/api/all?q=%query%&alt=json&max-results=150';
-
-function pwaLoadAlbumList()
+function pwaLoadAlbumList( pwa_username, callback )
 {
-	//loading...
-	var target = "#album_list";
-	showLoader( target );
+	pwa_username = ( pwa_username != false ) ? pwa_username : pwaGetAnchorVar( 0 );
+	//alert( "user: " + pwa_username );
 	
-	$.ajax({
-		url: pwa_base_url_user_feed + "?category=album&alt=json&access=public",
-		success:function( albums ) {
+	if( pwa_username != false )
+	{
+		//loading...
+		var feeds = pwaGetFeedUrls();
+		var target = "#album_list";
+		showLoader( target );
+		var feed_url = feeds.user_feed.replace( "%user%", pwa_username )
 		
-			//build html
-			var active_album_id = readAnchor();
-			var list_html = '<ul class="album_list">';
+		$.ajax({
+			url: feed_url + "?category=album&alt=json&access=public",
+			crossDomain: true,
+			success:function( albums ) {
 			
-			
-			for( i = 0; i < albums.feed.entry.length; i++ )
-			{
-				var img_base = albums.feed.entry[i].media$group.media$content[0].url;
-				var id_begin = albums.feed.entry[i].id.$t.indexOf( 'albumid/' ) + 8;
-				var id_end = albums.feed.entry[i].id.$t.indexOf( '?' );
-				var album_id = albums.feed.entry[i].id.$t.slice( id_begin, id_end );
-				var album_title = albums.feed.entry[i].title.$t;
+				//build html
+				var active_album_id = pwaGetAnchorVar( 1 );
+				var list_html = '<ul class="album_list">';
 				
-				var is_active = ( active_album_id != false && active_album_id == album_id );
-				var active_li = ( is_active ) ? 'class="active_selected"' : '';
-				var active_a = ( is_active ) ? 'class="link_active_selected"' : '';
-				var active_checked = ( is_active ) ? 'block' : 'none';
 				
-				list_html += '<li ' + active_li + '><div class="album_list_checked" style="display:' + active_checked + ';"></div><a href="#' + album_id + '" album_id="' + album_id + '" ' + active_a + '>' + album_title + '</a></li>';
+				for( i = 0; i < albums.feed.entry.length; i++ )
+				{
+					var img_base = albums.feed.entry[i].media$group.media$content[0].url;
+					var id_begin = albums.feed.entry[i].id.$t.indexOf( 'albumid/' ) + 8;
+					var id_end = albums.feed.entry[i].id.$t.indexOf( '?' );
+					var album_id = albums.feed.entry[i].id.$t.slice( id_begin, id_end );
+					var album_title = albums.feed.entry[i].title.$t;
+					album_title = ( album_title.length > 30 ) ? album_title.substr( 0, 27 ) + '...' : album_title;
+					
+					var is_active = ( active_album_id != false && active_album_id == album_id );
+					var active_li = ( is_active ) ? 'class="active_selected"' : '';
+					var active_a = ( is_active ) ? 'class="link_active_selected"' : '';
+					var active_checked = ( is_active ) ? 'block' : 'none';
+					
+					list_html += '<li ' + active_li + '><div class="album_list_checked" style="display:' + active_checked + ';"></div><a href="#' + pwa_username + '/' + album_id + '" album_id="' + album_id + '" user="' + pwa_username + '" ' + active_a + '>' + album_title + '</a></li>';
+					
+				}//end for loop
 				
-			}//end for loop
-			
-			list_html += '</ul>';
-			
-			//populate menu
-			$( target ).html( list_html );
-			
-		}//end function
-	});
+				list_html += '</ul>';
+				
+				//populate menu
+				$( target ).html( list_html );
+				
+				//do callback
+				callback();
+				
+			}//end function
+		});
+		
+	}//if we have a username
 	
 }//pwaLoadAlbumList()
 
-function pwaLoadPhotoGrid( type, query, callback )
+function pwaLoadPhotoGrid( type, query, callback, user )
 {
 	//validate vars
 	var photo_feed_url = false;
+	var feeds = pwaGetFeedUrls();
 	type = ( ( type != false ) ) ? type : "album";
-	query = ( query != false ) ? query : readAnchor();
 	
 	//compile url
 	switch( type )
 	{
 		case "album":
-			photo_feed_url = pwa_base_url_user_feed + "/albumid/" + query + "?category=photo&alt=json&access=public";
+			
+			var pwa_username = ( user != false ) ? user : pwaGetAnchorVar( 0 );
+			query = ( query != false ) ? query : pwaGetAnchorVar( 1 );
+			//alert( "user: " + pwa_username + " q: " + query );
+			
+			if( pwa_username != false )
+			{
+				photo_feed_url = feeds.user_feed.replace( "%user%", pwa_username );
+				photo_feed_url = ( query != false ) ? photo_feed_url + "/albumid/" + query + "?category=photo&alt=json&access=public" : photo_feed_url;
+			}
 			break;
 			
 		case "search":
-			photo_feed_url = pwa_base_url_search_feed.replace( "%query%", query );
-			//alert( "url: " + photo_feed_url );
-			//return false;
+			var search_url = feeds.search;
+			query = ( query != false ) ? query : pwaGetAnchorVar( 0 );
+			photo_feed_url = search_url.replace( "%query%", query );
 			break;
 	}
 	
@@ -82,18 +100,33 @@ function pwaLoadPhotoGrid( type, query, callback )
 				//build html
 				var grid_html = '<table class="grid ma_auto"><tr>';
 				var columns = 5;
+				var base_url_split = window.location.toString().split( "#" );
+				var base_url = base_url_split[0];
 				
 				for( i = 0; i < photos.feed.entry.length; i++ )
 				{
+					//basic info
 					var img_base = photos.feed.entry[i].media$group.media$content[0].url;
 					var img_title = photos.feed.entry[i].title.$t;
-					var id_begin = photos.feed.entry[i].id.$t.indexOf('photoid/')+8;
-					var id_end = photos.feed.entry[i].id.$t.indexOf('?');
-					var photo_id = photos.feed.entry[i].id.$t.slice(id_begin, id_end);
 					var thumb = img_base + '?imgmax=175&crop=1';
 					var full = img_base + '?imgmax=800&crop=0';
 					
-					grid_html += '<td><div class="grid_pic pa_5 box_shadow"><a href="' + full + '" rel="shadowbox[' + query + ']" title="' + img_title + '"><img src="' + thumb + '"/></a></div></td>';
+					//photo id
+					var id_begin = photos.feed.entry[i].id.$t.indexOf('photoid/')+8;
+					var id_end = photos.feed.entry[i].id.$t.indexOf('?');
+					var photo_id = photos.feed.entry[i].id.$t.slice(id_begin, id_end);
+					
+					//username or user id
+					var id_begin = photos.feed.entry[i].id.$t.indexOf('user/')+5;
+					var id_end = photos.feed.entry[i].id.$t.indexOf('/albumid');
+					var user = photos.feed.entry[i].id.$t.slice(id_begin, id_end);
+					
+					grid_html += '<td>';
+					grid_html += '<div class="grid_pic pa_5 box_shadow">';
+					grid_html += '<a href="' + full + '" rel="shadowbox[' + query + ']" title="' + img_title + '">';
+					grid_html += '<img src="' + thumb + '"/></a>';
+					grid_html += '<div class="grid_pic_meta al_center" style="display:none;"><a href="' + base_url + '#' + user + '">View User Albums</a></div>';
+					grid_html += '</div></td>';
 					if (i%columns == columns - 1 ) { grid_html += '</tr><tr>'; }
 					
 				 }//loop through photos
@@ -111,3 +144,30 @@ function pwaLoadPhotoGrid( type, query, callback )
 	}//if we have a valid album_id
 	 
 }//pwaLoadAlbumPreview()
+
+function pwaGetAnchorVar( index )
+{
+	var return_str = false;
+	var anchor = readAnchor();
+	
+	if( anchor != false &&
+		anchor.indexOf( "/" ) > -1 )
+	{
+		var anchor_split = anchor.split( "/" );
+		var return_str = anchor_split[index];
+	}
+	
+	return ( return_str != false ) ? return_str.replace( " ", "%20" ) : return_str;
+	
+}//pwaGetAnchorVar()
+
+function pwaGetFeedUrls()
+{
+	var urls = new Object();
+	urls.user_entry = 'http://picasaweb.google.com/data/entry/base/user/%user%';
+	urls.user_feed = 'http://picasaweb.google.com/data/feed/base/user/%user%';
+	urls.search = 'https://picasaweb.google.com/data/feed/api/all?q=%query%&alt=json&max-results=100';
+	
+	return urls;
+	
+}//pwaGetFeedUrls()

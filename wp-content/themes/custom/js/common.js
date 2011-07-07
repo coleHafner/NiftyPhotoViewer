@@ -63,9 +63,32 @@ function deactivateAlbumList()
 	
 }//deactivateAlbumList()
 
-function loadPhotoGrid( type, query )
+function loadPhotoGrid( type, query, user )
 {
 	var callback = function(){ Shadowbox.init({ skipSetup: true }); Shadowbox.setup(); }
-	pwaLoadPhotoGrid( type, query, callback );
+	pwaLoadPhotoGrid( type, query, callback, user );
 	
 }//loadPhotoGrid()
+
+function toggleSearch( cmd )
+{
+	switch( $.trim( cmd.toLowerCase() ) )
+	{
+		case "hide":
+			$( "#sidebar_search" ).slideUp( "slow", function() {
+				 
+				$( "#search_toggle" ).fadeIn( "fast" ); 
+			});
+			break;
+			
+		default:
+			$( "#search_toggle" ).fadeOut( "fast", function(){ 
+
+				$( "#sidebar_search" ).slideDown( "slow" );
+				 
+			});
+			break;
+			
+	}//switch
+	
+}//toggleSearch()

@@ -33,7 +33,7 @@
 			.live( "click", function(){
 			
 				//load album
-				loadPhotoGrid( "album", $( this ).attr( "album_id" ) );
+				loadPhotoGrid( "album", $( this ).attr( "album_id" ), $( this ).attr( "user" ) );
 
 				//deactivate
 				deactivateAlbumList();
@@ -50,6 +50,20 @@
 			.live( "mouseenter", function(){ $( this ).addClass( "active" ); $( this ).find( 'a' ).addClass( "link_active" ); } )
 			.live( "mouseleave", function(){ $( this ).removeClass( "active" ); $( this ).find( 'a' ).removeClass( "link_active" ); } );
 
+		$( ".grid_pic a" )
+			.live( "mouseenter", function(){ $( this ).parent().find( ".grid_pic_meta" ).slideDown( "fast" ); });
+
+		$( ".grid td" )
+			.live( "mouseleave", function(){ $( ".grid_pic_meta" ).slideUp( "fast" ); });
+
+		$( ".grid_pic_meta a" )
+			.live( "click", function(){
+				var base_url_split = $( this ).attr( "href" ).toString().split( "#" );
+				var user = base_url_split[1];
+				var callback = function(){ toggleSearch( "hide" ); }
+				pwaLoadAlbumList( user, callback );
+			});
+		
 		$( "#search_query" )
 			.click( function(){
 				
@@ -65,8 +79,15 @@
 				
 				if( key == "13" )
 				{
+					//save search
+					var cur_val = $( this ).attr( "value" );
+					cur_val = cur_val.replace( " ", "%20" );
+					var base_url_split = window.location.toString().split( "#" );
+					var base_url = base_url_split[0];
+					window.location = base_url + '#' + cur_val;
+					
 					//run search
-					loadPhotoGrid( "search", $( this ).attr( "value" ) );
+					loadPhotoGrid( "search", cur_val, false );
 					$( this ).blur();
 
 					//deactivate
@@ -89,8 +110,14 @@
 				
 				if( cur_val != default_val && cur_val.length > 0 )
 				{	
+					//save search
+					cur_val = cur_val.replace( " ", "%20" );
+					var base_url_split = window.location.toString().split( "#" );
+					var base_url = base_url_split[0];
+					window.location = base_url + '#' + cur_val;
+
 					//run search
-					loadPhotoGrid( "search", cur_val );
+					loadPhotoGrid( "search", cur_val, false );
 
 					//deactivate
 					deactivateAlbumList();
@@ -101,29 +128,8 @@
 				}
 			});
 
-		$( "#search_toggle" )
-			.click( function( event ){
-
-				event.preventDefault();
-				
-				$( "#search_toggle" ).fadeOut( "fast", function(){ 
-
-					$( "#sidebar_search" ).slideDown( "slow" );
-					 
-				});
-			});
-
-		$( "#sidebar_logo" )
-			.click( function( event ){
-
-				event.preventDefault();
-				 
-				$( "#sidebar_search" ).slideUp( "slow", function() {
-					 
-					$( "#search_toggle" ).fadeIn( "fast" ); 
-				});
-				 
-			});
+		$( "#search_toggle" ) .click( function( event ){ event.preventDefault(); toggleSearch( "show" ); });
+		$( "#sidebar_logo" ).click( function( event ){ event.preventDefault(); toggleSearch( "hide" ); });
 
 		$( "#text_input_close" )
 		
@@ -150,19 +156,20 @@
 	$( window ).resize( function(){
 		
 		//auto height
-		resizeSidebar();
+		//resizeSidebar();
 		
 		//auto-resize photo
-		resizeGridCell();
+		//resizeGridCell();
 	});
 	
 	$( window ).load( function() {
 
 		//load list of albums
-		pwaLoadAlbumList();
+		var callback = function(){};
+		pwaLoadAlbumList( false );
 		
 		//if album id defined, load album
-		loadPhotoGrid( "album", false );
+		loadPhotoGrid( "album", false, false );
 	});
 	
 </script>
