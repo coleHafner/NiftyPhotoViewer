@@ -12,20 +12,22 @@ function getViewportInfo() {
     //get specific
     if( agent.msie == true )
     {
-        if( major_version == 6 )
-        {
-            innerHeight = document.documentElement.clientHeight;
-            innerWidth = document.documentElement.clientWidth;
-        }
-        else if( major_version <= 5 )  
+        if( major_version <= 5 )  
         {
             innerHeight = document.getElementsByTagName('body')[0].clientHeight;
             innerWidth = document.getElementsByTagName('body')[0].clientWidth;
         }
+        else
+        {
+        	innerHeight = document.documentElement.clientHeight;
+        	innerWidth = document.documentElement.clientWidth;
+        }	
     }
     
     viewport.innerHeight = innerHeight;
     viewport.innerWidth = innerWidth;
+    //alert( "H" + viewport.innerHeight + " W: " + viewport.innerWidth );
+    
     return viewport;
     
 }//getViewportInfo()
@@ -57,8 +59,8 @@ function resizeGridCell()
 
 function deactivateAlbumList()
 {
-	$( "#album_list ul li" ).removeClass( "active_selected" );
-	$( "#album_list ul li a" ).removeClass( "link_active_selected" );
+	$( "#album_list li" ).removeClass( "active_selected" );
+	$( "#album_list li a" ).removeClass( "link_active_selected" );
 	$( ".album_list_checked" ).css( "display", "none" );
 	
 }//deactivateAlbumList()
@@ -77,14 +79,14 @@ function toggleSearch( cmd )
 		case "hide":
 			$( "#sidebar_search" ).slideUp( "slow", function() {
 				 
-				$( "#search_toggle" ).fadeIn( "fast" ); 
+				$( "#search_toggle_container" ).fadeIn( "fast" ); 
 			});
 			break;
 			
 		default:
-			$( "#search_toggle" ).fadeOut( "fast", function(){ 
+			$( "#search_toggle_container" ).fadeOut( "fast", function(){ 
 
-				$( "#sidebar_search" ).slideDown( "slow" );
+				$( "#sidebar_search" ).css( "display", "block" );
 				 
 			});
 			break;
@@ -92,3 +94,50 @@ function toggleSearch( cmd )
 	}//switch
 	
 }//toggleSearch()
+
+function buildPagination()
+{
+	//reset slider div
+	$( "#album_slider" ).animate( { top:"0" }, 1000, function(){} );
+	var list_item_height = getHeight( "#album_list li" );
+	var num_items = $( "#album_list" ).children().length;
+	var total_height = getHeight( "#sidebar" );
+	var footer_height = getHeight( "#sidebar_copy" );
+	var header_height = getHeight( "#sidebar_header_container" );
+	
+	var list_height = list_item_height * num_items;
+	var list_area = total_height - ( header_height + footer_height + list_item_height + 17 );
+	//alert( "total: " + total_height + " list_height: " + list_height + " header_height: " + header_height + " list_area: " + list_area.toString() );
+	
+	if( list_height > list_area )
+	{
+		var pagination = 'Page:&nbsp;';
+		var new_list_height = list_area.toString() + "px";
+		
+		var items_per_page = Math.floor( list_area/list_item_height );
+		var num_pages = Math.ceil(  num_items/items_per_page );
+		//alert( "li height: " + list_item_height + " new_list_height " + new_list_height + " num_list_items: " + num_items + " item_per_page: " + items_per_page + " num_pages: " + num_pages );
+		
+		var user = pwaGetAnchorVar( 0 );
+		var album_id = pwaGetAnchorVar( 1 );
+		var link_base = "#" + user + "/" + album_id;
+		var active_class = '';
+		
+		for( i = 1; i <= num_pages; i++  )
+		{
+			active_class = ( i == 1 ) ? 'class="active"' : '';
+			pagination += '<a href="' + link_base + '/' + i + '" ' + active_class + '>' + i + '</a>&nbsp;&nbsp;';
+		}
+		
+		$( "#album_list_container" ).css( "overflow", "hidden" );
+		$( "#album_list_container" ).css( "height", new_list_height );
+		$( "#sidebar_pagination" ).html( pagination );
+		
+	}
+	else
+	{
+		//clear pagination
+		$( "#sidebar_pagination" ).html( '' );
+	}
+	
+}//buildPagination()

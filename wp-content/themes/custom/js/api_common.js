@@ -73,3 +73,11 @@ function validateElement( class_or_id )
 	return is_valid;
 	
 }//validateElement()
+
+function getHeight( el )
+{
+	if( validateElement( el ) == true )
+	{
+		return parseInt( $( el ).css( "height" ).toString().replace( "px", "" ) );
+	}
+}//getHeight()

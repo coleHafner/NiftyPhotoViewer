@@ -14,8 +14,7 @@
 <link rel="pingback" href="<?php bloginfo( 'pingback_url' ); ?>" />
 <link rel="shortcut icon" href="<?php bloginfo( 'template_directory' ); ?>/favicon.ico" />
 
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
+<script type="text/javascript" src="<?php bloginfo( 'stylesheet_directory' ); ?>/js/jquery-1.6.2.js"></script>
 <script type="text/javascript" src="<?php bloginfo( 'stylesheet_directory' ); ?>/js/common.js"></script>
 
 <script type="text/javascript" src="<?php bloginfo( 'stylesheet_directory' ); ?>/js/shadowbox/shadowbox.js"></script>
@@ -29,7 +28,7 @@
 		resizeSidebar();
 		
 		//load album onClick
-		$( "#album_list ul li a" )
+		$( "#album_list li a" )
 			.live( "click", function(){
 			
 				//load album
@@ -51,16 +50,16 @@
 			.live( "mouseleave", function(){ $( this ).removeClass( "active" ); $( this ).find( 'a' ).removeClass( "link_active" ); } );
 
 		$( ".grid_pic a" )
-			.live( "mouseenter", function(){ $( this ).parent().find( ".grid_pic_meta" ).slideDown( "fast" ); });
+			.live( "mouseenter", function(){ $( this ).parent().find( ".grid_pic_meta" ).slideDown( 300 ); });
 
 		$( ".grid td" )
-			.live( "mouseleave", function(){ $( ".grid_pic_meta" ).slideUp( "fast" ); });
+			.live( "mouseleave", function(){ $( ".grid_pic_meta" ).slideUp( 300 ); });
 
 		$( ".grid_pic_meta a" )
 			.live( "click", function(){
 				var base_url_split = $( this ).attr( "href" ).toString().split( "#" );
 				var user = base_url_split[1];
-				var callback = function(){ toggleSearch( "hide" ); }
+				var callback = function(){ buildPagination(); toggleSearch( "hide" ); }
 				pwaLoadAlbumList( user, callback );
 			});
 		
@@ -131,6 +130,34 @@
 		$( "#search_toggle" ) .click( function( event ){ event.preventDefault(); toggleSearch( "show" ); });
 		$( "#sidebar_logo" ).click( function( event ){ event.preventDefault(); toggleSearch( "hide" ); });
 
+		$( ".sidebar_pagination a" ).live( "click", function(){
+			
+			//get page num and list height
+			var page_height = getHeight( "#album_list_container" );
+			var list_item_height = getHeight( "#album_list li" );
+			var num_items = $( "#album_list" ).children().length;
+			var list_height = list_item_height * num_items;
+			var max_items_per_page = page_height/list_item_height;
+			var true_page_height = max_items_per_page * list_item_height;
+			//alert( "page_height: " + page_height + " li height: " + list_item_height + " total_list height: " + list_height );
+			
+			var href_split = $( this ).attr( "href" ).split( "/" );
+			var last_key = href_split.length - 1;
+			var page_num = href_split[last_key];   
+
+			//deactivate
+			$( ".sidebar_pagination a" ).removeClass( "active" );
+			$( this ).addClass( "active" );
+
+			//calc slide
+			var requested_position = page_num * true_page_height;
+			var scroll_to = ( requested_position * -1 ) + true_page_height;
+
+			//scroll list
+			$( "#album_slider" ).animate( { top:scroll_to.toString() }, 1000, function(){} );
+				
+		});
+
 		$( "#text_input_close" )
 		
 			.click(  function( event ){
@@ -156,7 +183,7 @@
 	$( window ).resize( function(){
 		
 		//auto height
-		//resizeSidebar();
+		resizeSidebar();
 		
 		//auto-resize photo
 		//resizeGridCell();
@@ -165,8 +192,8 @@
 	$( window ).load( function() {
 
 		//load list of albums
-		var callback = function(){};
-		pwaLoadAlbumList( false );
+		var callback = function(){ buildPagination(); toggleSearch( "hide" ); }
+		pwaLoadAlbumList( false, callback );
 		
 		//if album id defined, load album
 		loadPhotoGrid( "album", false, false );

@@ -9,18 +9,20 @@ function pwaLoadAlbumList( pwa_username, callback )
 	{
 		//loading...
 		var feeds = pwaGetFeedUrls();
-		var target = "#album_list";
+		var target = "#album_slider";
 		showLoader( target );
+		
 		var feed_url = feeds.user_feed.replace( "%user%", pwa_username )
 		
 		$.ajax({
 			url: feed_url + "?category=album&alt=json&access=public",
 			crossDomain: true,
+			dataType: "jsonp",
 			success:function( albums ) {
 			
 				//build html
 				var active_album_id = pwaGetAnchorVar( 1 );
-				var list_html = '<ul class="album_list">';
+				var list_html = '<ul class="album_list" id="album_list">';
 				
 				
 				for( i = 0; i < albums.feed.entry.length; i++ )
@@ -30,7 +32,7 @@ function pwaLoadAlbumList( pwa_username, callback )
 					var id_end = albums.feed.entry[i].id.$t.indexOf( '?' );
 					var album_id = albums.feed.entry[i].id.$t.slice( id_begin, id_end );
 					var album_title = albums.feed.entry[i].title.$t;
-					album_title = ( album_title.length > 30 ) ? album_title.substr( 0, 27 ) + '...' : album_title;
+					album_title = ( album_title.length > 40 ) ? album_title.substr( 0, 37 ) + '...' : album_title;
 					
 					var is_active = ( active_album_id != false && active_album_id == album_id );
 					var active_li = ( is_active ) ? 'class="active_selected"' : '';
@@ -91,12 +93,14 @@ function pwaLoadPhotoGrid( type, query, callback, user )
 	{
 		//loading...
 		showLoader( "#content" );
-		
+		//alert( "url: " + photo_feed_url );
 		//load album
 		$.ajax({
 			url: photo_feed_url,
+			crossDomain: true,
+			dataType: "jsonp",
 			success:function( photos ) {
-			
+				
 				//build html
 				var grid_html = '<table class="grid ma_auto"><tr>';
 				var columns = 5;
