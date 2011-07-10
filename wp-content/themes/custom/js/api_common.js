@@ -74,10 +74,11 @@ function validateElement( class_or_id )
 	
 }//validateElement()
 
-function getHeight( el )
+function getHeight( el, css_attr )
 {
 	if( validateElement( el ) == true )
 	{
-		return parseInt( $( el ).css( "height" ).toString().replace( "px", "" ) );
+		css_attr = ( css_attr == false ) ? "height" : css_attr;
+		return parseInt( $( el ).css( css_attr ).toString().replace( "px", "" ) );
 	}
 }//getHeight()

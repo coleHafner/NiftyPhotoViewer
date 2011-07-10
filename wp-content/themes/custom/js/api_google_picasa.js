@@ -1,6 +1,11 @@
 
-//declare globals
-function pwaLoadAlbumList( pwa_username, callback )
+/**
+ * This is wrapper script to work with Google Photo API v1.0 
+ * @author	hafner
+ * @since	20110707
+ */
+
+function pwaLoadAlbumList( pwa_username, callback, album_id )
 {
 	pwa_username = ( pwa_username != false ) ? pwa_username : pwaGetAnchorVar( 0 );
 	//alert( "user: " + pwa_username );
@@ -21,25 +26,24 @@ function pwaLoadAlbumList( pwa_username, callback )
 			success:function( albums ) {
 			
 				//build html
-				var active_album_id = pwaGetAnchorVar( 1 );
+				var active_album_id = ( album_id != false ) ? album_id : pwaGetAnchorVar( 1 );
 				var list_html = '<ul class="album_list" id="album_list">';
-				
 				
 				for( i = 0; i < albums.feed.entry.length; i++ )
 				{
 					var img_base = albums.feed.entry[i].media$group.media$content[0].url;
 					var id_begin = albums.feed.entry[i].id.$t.indexOf( 'albumid/' ) + 8;
 					var id_end = albums.feed.entry[i].id.$t.indexOf( '?' );
-					var album_id = albums.feed.entry[i].id.$t.slice( id_begin, id_end );
+					var cur_album_id = albums.feed.entry[i].id.$t.slice( id_begin, id_end );
 					var album_title = albums.feed.entry[i].title.$t;
-					album_title = ( album_title.length > 40 ) ? album_title.substr( 0, 37 ) + '...' : album_title;
+					album_title = ( album_title.length > 28 ) ? album_title.substr( 0, 25 ) + '...' : album_title;
 					
-					var is_active = ( active_album_id != false && active_album_id == album_id );
+					var is_active = ( active_album_id != false && active_album_id == cur_album_id );
 					var active_li = ( is_active ) ? 'class="active_selected"' : '';
 					var active_a = ( is_active ) ? 'class="link_active_selected"' : '';
 					var active_checked = ( is_active ) ? 'block' : 'none';
 					
-					list_html += '<li ' + active_li + '><div class="album_list_checked" style="display:' + active_checked + ';"></div><a href="#' + pwa_username + '/' + album_id + '" album_id="' + album_id + '" user="' + pwa_username + '" ' + active_a + '>' + album_title + '</a></li>';
+					list_html += '<li ' + active_li + '><div class="album_list_checked" style="display:' + active_checked + ';"></div><a href="#' + pwa_username + '/' + cur_album_id + '" album_id="' + cur_album_id + '" user="' + pwa_username + '" ' + active_a + '>' + album_title + '</a></li>';
 					
 				}//end for loop
 				
@@ -102,10 +106,11 @@ function pwaLoadPhotoGrid( type, query, callback, user )
 			success:function( photos ) {
 				
 				//build html
-				var grid_html = '<table class="grid ma_auto"><tr>';
-				var columns = 5;
 				var base_url_split = window.location.toString().split( "#" );
+				var show_meta = ( type == "search" ) ? true : false;
+				var grid_html = '<table class="grid ma_auto"><tr>';
 				var base_url = base_url_split[0];
+				var columns = 5;
 				
 				for( i = 0; i < photos.feed.entry.length; i++ )
 				{
@@ -115,21 +120,33 @@ function pwaLoadPhotoGrid( type, query, callback, user )
 					var thumb = img_base + '?imgmax=175&crop=1';
 					var full = img_base + '?imgmax=800&crop=0';
 					
-					//photo id
-					var id_begin = photos.feed.entry[i].id.$t.indexOf('photoid/')+8;
-					var id_end = photos.feed.entry[i].id.$t.indexOf('?');
-					var photo_id = photos.feed.entry[i].id.$t.slice(id_begin, id_end);
-					
 					//username or user id
 					var id_begin = photos.feed.entry[i].id.$t.indexOf('user/')+5;
 					var id_end = photos.feed.entry[i].id.$t.indexOf('/albumid');
 					var user = photos.feed.entry[i].id.$t.slice(id_begin, id_end);
 					
+					//album id
+					var id_begin = photos.feed.entry[i].id.$t.indexOf('albumid/')+8;
+					var id_end = photos.feed.entry[i].id.$t.indexOf('photoid');
+					var album_id = photos.feed.entry[i].id.$t.slice(id_begin, id_end);
+					
+					//photo id
+					var id_begin = photos.feed.entry[i].id.$t.indexOf('photoid/')+8;
+					var id_end = photos.feed.entry[i].id.$t.indexOf('?');
+					var photo_id = photos.feed.entry[i].id.$t.slice(id_begin, id_end);
+					
 					grid_html += '<td>';
 					grid_html += '<div class="grid_pic pa_5 box_shadow">';
 					grid_html += '<a href="' + full + '" rel="shadowbox[' + query + ']" title="' + img_title + '">';
 					grid_html += '<img src="' + thumb + '"/></a>';
-					grid_html += '<div class="grid_pic_meta al_center" style="display:none;"><a href="' + base_url + '#' + user + '">View User Albums</a></div>';
+					
+					
+					if( show_meta )
+					{
+						grid_html += '<div class="grid_pic_meta al_center" style="display:none;"><a href="' + base_url + '#' + user + '/' + album_id + '">View Album</a></div>';
+					}
+					
+					
 					grid_html += '</div></td>';
 					if (i%columns == columns - 1 ) { grid_html += '</tr><tr>'; }
 					

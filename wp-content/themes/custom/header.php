@@ -55,13 +55,14 @@
 		$( ".grid td" )
 			.live( "mouseleave", function(){ $( ".grid_pic_meta" ).slideUp( 300 ); });
 
-		$( ".grid_pic_meta a" )
-			.live( "click", function(){
-				var base_url_split = $( this ).attr( "href" ).toString().split( "#" );
-				var user = base_url_split[1];
-				var callback = function(){ buildPagination(); toggleSearch( "hide" ); }
-				pwaLoadAlbumList( user, callback );
-			});
+		$( ".grid_pic_meta a" ).live( "click", function(){
+
+			var base_url_split = $( this ).attr( "href" ).toString().split( "#" );
+			var anchor_split = base_url_split[1].split( "/" );
+			 
+			loadAlbumList( $( this ) ); 
+			loadPhotoGrid( "album", anchor_split[1], anchor_split[0] ); 
+		});
 		
 		$( "#search_query" )
 			.click( function(){
@@ -130,11 +131,11 @@
 		$( "#search_toggle" ) .click( function( event ){ event.preventDefault(); toggleSearch( "show" ); });
 		$( "#sidebar_logo" ).click( function( event ){ event.preventDefault(); toggleSearch( "hide" ); });
 
-		$( ".sidebar_pagination a" ).live( "click", function(){
+		$( ".sidebar_pages a" ).live( "click", function(){
 			
 			//get page num and list height
-			var page_height = getHeight( "#album_list_container" );
-			var list_item_height = getHeight( "#album_list li" );
+			var page_height = getHeight( "#album_list_container", false );
+			var list_item_height = getHeight( "#album_list li", false );
 			var num_items = $( "#album_list" ).children().length;
 			var list_height = list_item_height * num_items;
 			var max_items_per_page = page_height/list_item_height;
@@ -158,6 +159,22 @@
 				
 		});
 
+		$( "#sidebar_pag_prev" )
+		
+			.live( "click", function( event ){
+				 
+				event.preventDefault();
+				scrollPageset( "prev" );				
+			});
+
+		$( "#sidebar_pag_next" )
+		
+			.live( "click", function( event ){
+
+				event.preventDefault();
+				scrollPageset( "next" );								 
+			});
+		
 		$( "#text_input_close" )
 		
 			.click(  function( event ){
@@ -171,7 +188,7 @@
 		//init shadowbox
 		Shadowbox.init({ 
 			continuous:true, 
-			handleOversize:'none', 
+			handleOversize:'resize', 
 			overlayOpacity:0.8, 
 			overlayColor:'#000000',
 			displayNav:true,
@@ -192,9 +209,8 @@
 	$( window ).load( function() {
 
 		//load list of albums
-		var callback = function(){ buildPagination(); toggleSearch( "hide" ); }
-		pwaLoadAlbumList( false, callback );
-		
+		loadAlbumList( false );
+
 		//if album id defined, load album
 		loadPhotoGrid( "album", false, false );
 	});
@@ -210,6 +226,8 @@
 <!-- php vars -->
 <input type="hidden" id="root_url" value="<?php bloginfo( 'url' ); ?>" />
 <input type="hidden" id="pwa_username" value="colehafner" />
+<input type="hidden" id="max_pagesets" value="0" />
+<input type="hidden" id="cur_pageset" value="0" />
 <!-- end php vars -->
 
 <!-- start wrapper -->

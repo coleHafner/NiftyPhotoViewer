@@ -36,14 +36,39 @@
 			<div class="sidebar_search_toggle" id="search_toggle_container" style="display:none;">
 			
 				<div class="sidebar_pagination fl_left" id="sidebar_pagination">
-							
+				
+					<div class="sidebar_label fl_left" id="sidebar_label">
+					</div>
+					
+					<div class="sidebar_pages_container fl_left" id="sidebar_pages_container" >
+						<div class="sidebar_pages" id="sidebar_pages"></div>
+					</div>
+					
+					<div class="sidebar_controls fl_right" id="sidebar_controls" style="display:none;">
+					
+						<a href="#" id="sidebar_pag_prev">
+							<div class="sidebar_pag_prev fl_left">
+								<img src="<?php bloginfo( 'stylesheet_directory' ); ?>/pag_prev_grey.gif" />
+							</div>
+						</a>
+						
+						<a href="#" id="sidebar_pag_next">
+							<div class="sidebar_pag_next fl_left">
+								<img src="<?php bloginfo( 'stylesheet_directory' ); ?>/pag_next_grey.gif" />
+							</div>
+						</a>
+					</div>
+					
+					<div class="clear"></div>
 				</div>
 				
-				<div class="fl_right">
+				<div class="sidebar_search_icon fl_right">
 					<a href ="#" id="search_toggle">
 						<img src="<?php bloginfo( 'stylesheet_directory' ); ?>/icon_search.png" />
 					</a>
 				</div>
+				
+				<div class="clear"></div>
 			</div>
 			
 		</div>
